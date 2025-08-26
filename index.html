@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Pedido de Uniformes</title>
+    <!-- Inclui o Tailwind CSS para o design responsivo e moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .container {
+            max-width: 90%;
+            margin: auto;
+            padding: 1rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        /* Efeito de carregamento */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #ef4444;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="container bg-white shadow-xl rounded-2xl p-6 md:p-10 transition-all duration-300">
+        <!-- Título principal -->
+        <div class="w-full text-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">Sistema de Pedidos</h1>
+            <p class="text-gray-500">Faça seu pedido de uniforme da academia!</p>
+        </div>
+
+        <!-- Seção do Formulário de Pedido -->
+        <div id="form-view" class="w-full max-w-lg transition-opacity duration-500 opacity-100">
+            <div class="space-y-6">
+                <!-- Campo Nome Completo -->
+                <div>
+                    <label for="nome" class="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+                    <input type="text" id="nome" name="nome" placeholder="Seu nome" class="mt-1 block w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500 transition-colors duration-200">
+                </div>
+                
+                <!-- Campo Modelo -->
+                <div>
+                    <label for="modelo" class="block text-sm font-medium text-gray-700 mb-1">Modelo</label>
+                    <select id="modelo" name="modelo" class="mt-1 block w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500 transition-colors duration-200">
+                        <option value="">Selecione um modelo...</option>
+                        <option value="Camiseta dry-fit Premium">Camiseta dry-fit Premium</option>
+                        <option value="Shorts muay thai tradicional curto">Shorts muay thai tradicional curto</option>
+                        <option value="Regata nadador feminina">Regata nadador feminina</option>
+                        <option value="Shorts de muay thai longo">Shorts de muay thai longo</option>
+                        <option value="Regata masculina">Regata masculina</option>
+                        <option value="Top fitness Premium">Top fitness Premium</option>
+                    </select>
+                </div>
+
+                <!-- Campo Cor -->
+                <div>
+                    <label for="cor" class="block text-sm font-medium text-gray-700 mb-1">Cor</label>
+                    <select id="cor" name="cor" class="mt-1 block w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500 transition-colors duration-200">
+                        <option value="">Selecione uma cor...</option>
+                        <option value="Preto e rosa">Preto e rosa</option>
+                        <option value="Preto e dourado">Preto e dourado</option>
+                    </select>
+                </div>
+
+                <!-- Campo Tamanho -->
+                <div>
+                    <label for="tamanho" class="block text-sm font-medium text-gray-700 mb-1">Tamanho</label>
+                    <select id="tamanho" name="tamanho" class="mt-1 block w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500 transition-colors duration-200">
+                        <option value="">Selecione um tamanho...</option>
+                        <option value="PP">PP</option>
+                        <option value="P">P</option>
+                        <option value="M">M</option>
+                        <option value="G">G</option>
+                        <option value="GG">GG</option>
+                    </select>
+                </div>
+                
+                <!-- Botão de submissão -->
+                <button id="submit-btn" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-rose-500 hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 transition-colors duration-200">
+                    Fazer Pedido
+                </button>
+            </div>
+            
+            <!-- Mensagem de status -->
+            <div id="status-message" class="mt-4 text-center text-sm font-medium text-gray-600"></div>
+
+            <!-- Botão para o Painel de Administração -->
+            <button id="admin-btn" class="w-full mt-4 flex justify-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors duration-200">
+                Acessar Painel de Administração
+            </button>
+        </div>
+
+        <!-- Seção do Painel de Administração -->
+        <div id="admin-view" class="w-full max-w-3xl transition-opacity duration-500 opacity-0 hidden">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4 text-center">Resumo de Pedidos</h2>
+            <div class="w-full text-center text-sm font-medium text-gray-500 mb-4">
+                ID do Usuário: <span id="userIdDisplay" class="font-mono"></span>
+            </div>
+            <div id="admin-table-container" class="w-full overflow-x-auto rounded-lg shadow-lg">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modelo</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cor</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PP</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">M</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">G</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GG</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-summary-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Linhas de resumo serão inseridas aqui via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Botão para voltar ao formulário -->
+            <button id="back-to-form-btn" class="w-full mt-6 flex justify-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-colors duration-200">
+                Voltar
+            </button>
+        </div>
+
+        <!-- Pop-up de Mensagem -->
+        <div id="message-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3 text-center">
+                    <div id="modal-icon" class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+                        <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <h3 id="modal-title" class="text-lg leading-6 font-medium text-gray-900 mt-2"></h3>
+                    <div class="mt-2 px-7 py-3">
+                        <p id="modal-body" class="text-sm text-gray-500"></p>
+                    </div>
+                    <div class="items-center px-4 py-3">
+                        <button id="modal-close-btn" class="px-4 py-2 bg-rose-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500">
+                            OK
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by the Canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        // Dados do sistema de pedidos
+        const PIN = "1234"; // Senha simples para o painel de administração
+
+        // Elementos da interface
+        const formView = document.getElementById('form-view');
+        const adminView = document.getElementById('admin-view');
+        const submitBtn = document.getElementById('submit-btn');
+        const adminBtn = document.getElementById('admin-btn');
+        const backToFormBtn = document.getElementById('back-to-form-btn');
+        const nomeInput = document.getElementById('nome');
+        const modeloSelect = document.getElementById('modelo');
+        const corSelect = document.getElementById('cor');
+        const tamanhoSelect = document.getElementById('tamanho');
+        const ordersSummaryBody = document.getElementById('orders-summary-body');
+        const modal = document.getElementById('message-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        const modalIcon = document.getElementById('modal-icon');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+
+        // Referências ao Firebase
+        let db;
+        let auth;
+        let userId;
+        let isFirebaseReady = false;
+
+        // Função para mostrar pop-up de mensagem
+        function showMessage(title, body, isSuccess) {
+            modalTitle.textContent = title;
+            modalBody.textContent = body;
+            modalIcon.innerHTML = isSuccess ?
+                '<svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' :
+                '<svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+            modalIcon.classList.remove('bg-green-100', 'bg-red-100');
+            modalIcon.classList.add(isSuccess ? 'bg-green-100' : 'bg-red-100');
+            modal.classList.remove('hidden');
+        }
+
+        // Adiciona um evento para fechar o pop-up
+        modalCloseBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+
+        // Inicializar Firebase
+        async function initializeFirebase() {
+            loadingOverlay.classList.remove('hidden');
+            try {
+                if (firebaseConfig) {
+                    const app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                    
+                    // Autentica o usuário com o token fornecido ou de forma anônima
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    isFirebaseReady = true;
+
+                    // Monitorar o estado de autenticação para iniciar o listener do Firestore
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            userId = user.uid;
+                            userIdDisplay.textContent = userId;
+                            
+                            // Inicia o listener de pedidos em tempo real
+                            onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/pedidos`), (snapshot) => {
+                                const allOrders = [];
+                                snapshot.forEach(doc => {
+                                    allOrders.push(doc.data());
+                                });
+                                renderAdminView(allOrders);
+                            }, (error) => {
+                                console.error("Erro ao obter dados em tempo real:", error);
+                                showMessage("Erro", "Não foi possível carregar os pedidos em tempo real.", false);
+                            });
+                        }
+                    });
+
+                } else {
+                    showMessage("Erro de Conexão", "O sistema precisa de uma conexão online para funcionar. Por favor, use-o no ambiente onde ele foi criado.", false);
+                }
+            } catch (e) {
+                console.error("Erro ao inicializar o Firebase:", e);
+                showMessage("Erro de Inicialização", "Não foi possível conectar ao sistema. Por favor, tente novamente.", false);
+            } finally {
+                loadingOverlay.classList.add('hidden');
+            }
+        }
+
+        // Evento de clique para o botão de submissão do formulário
+        submitBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            
+            if (!isFirebaseReady) {
+                showMessage("Erro", "O sistema não está pronto. Por favor, aguarde.", false);
+                return;
+            }
+
+            const nome = nomeInput.value.trim();
+            const modelo = modeloSelect.value;
+            const cor = corSelect.value;
+            const tamanho = tamanhoSelect.value;
+
+            // Validação simples dos campos
+            if (!nome || !modelo || !cor || !tamanho) {
+                showMessage('Erro', 'Por favor, preencha todos os campos do formulário.', false);
+                return;
+            }
+
+            loadingOverlay.classList.remove('hidden');
+            try {
+                // Adiciona o pedido ao Firestore
+                const newOrder = {
+                    nome: nome,
+                    modelo: modelo,
+                    cor: cor,
+                    tamanho: tamanho,
+                    timestamp: Date.now()
+                };
+                await addDoc(collection(db, `artifacts/${appId}/users/${userId}/pedidos`), newOrder);
+                
+                // Limpa o formulário
+                nomeInput.value = '';
+                modeloSelect.value = '';
+                corSelect.value = '';
+                tamanhoSelect.value = '';
+
+                showMessage('Pedido Enviado', 'Seu pedido foi enviado com sucesso e salvo na nuvem!', true);
+            } catch (e) {
+                console.error("Erro ao adicionar pedido:", e);
+                showMessage('Erro', 'Houve um problema ao salvar seu pedido. Por favor, tente novamente.', false);
+            } finally {
+                loadingOverlay.classList.add('hidden');
+            }
+        });
+
+        // Evento de clique para o botão do painel de administração
+        adminBtn.addEventListener('click', () => {
+            const pinAttempt = prompt("Por favor, insira o PIN de administrador:");
+            if (pinAttempt === PIN) {
+                formView.classList.add('opacity-0');
+                setTimeout(() => {
+                    formView.classList.add('hidden');
+                    adminView.classList.remove('hidden');
+                    setTimeout(() => {
+                        adminView.classList.remove('opacity-0');
+                    }, 50);
+                }, 500);
+            } else {
+                showMessage('Acesso Negado', 'PIN incorreto. Acesso restrito.', false);
+            }
+        });
+
+        // Evento de clique para voltar ao formulário
+        backToFormBtn.addEventListener('click', () => {
+            adminView.classList.add('opacity-0');
+            setTimeout(() => {
+                adminView.classList.add('hidden');
+                formView.classList.remove('hidden');
+                setTimeout(() => {
+                    formView.classList.remove('opacity-0');
+                }, 50);
+            }, 500);
+        });
+        
+        // Função para renderizar o painel de administração com os dados do Firestore
+        function renderAdminView(orders) {
+            ordersSummaryBody.innerHTML = ''; // Limpa a tabela
+
+            // Consolida os pedidos
+            const summary = {};
+            orders.forEach(order => {
+                const key = `${order.modelo}|${order.cor}`;
+                if (!summary[key]) {
+                    summary[key] = {
+                        modelo: order.modelo,
+                        cor: order.cor,
+                        PP: 0, P: 0, M: 0, G: 0, GG: 0
+                    };
+                }
+                if (summary[key][order.tamanho] !== undefined) {
+                    summary[key][order.tamanho]++;
+                }
+            });
+
+            // Cria as linhas da tabela a partir do resumo
+            for (const key in summary) {
+                const item = summary[key];
+                const row = document.createElement('tr');
+                row.classList.add('hover:bg-gray-50');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.modelo}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.cor}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.PP}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.P}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.M}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.G}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.GG}</td>
+                `;
+                ordersSummaryBody.appendChild(row);
+            }
+
+            // Exibe mensagem caso não haja pedidos
+            if (orders.length === 0) {
+                const emptyRow = document.createElement('tr');
+                emptyRow.innerHTML = `<td colspan="7" class="px-6 py-4 text-center text-sm text-gray-400">Nenhum pedido realizado ainda.</td>`;
+                ordersSummaryBody.appendChild(emptyRow);
+            }
+        }
+        
+        // Inicializa a aplicação
+        initializeFirebase();
+    </script>
+</body>
+</html>
